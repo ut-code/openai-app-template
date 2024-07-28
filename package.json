@@ -1,0 +1,17 @@
+{
+  "name": "openai-app-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.mjs",
+  "keywords": [],
+  "author": "utcode",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --env-file=.env server.mjs"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.2.5",
+    "express": "^4.19.2"
+  }
+}
