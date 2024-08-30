@@ -1,8 +1,64 @@
+import { z } from "zod";
 import express from "express";
 import { ChatOpenAI } from "@langchain/openai";
+import { tool } from "@langchain/core/tools";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+
+// toolを定義
+const addTool = tool(
+  async ({ a, b }) => {
+    return a + b;
+  },
+  {
+    name: "add",
+    schema: z.object({
+      a: z.number(),
+      b: z.number(),
+    }),
+    description: "Adds a and b.",
+  },
+);
+
+const multiplyTool = tool(
+  async ({ a, b }) => {
+    return a * b;
+  },
+  {
+    name: "multiply",
+    schema: z.object({
+      a: z.number(),
+      b: z.number(),
+    }),
+    description: "Multiplies a and b.",
+  },
+);
+
+const forecastTool = tool(
+  async () => {
+    const forecast = await fetch(
+      "https://www.jma.go.jp/bosai/forecast/data/overview_forecast/130000.json",
+    );
+    const forecastJson = await forecast.json();
+    const forecastText = forecastJson.text;
+    return await forecastText;
+  },
+  {
+    name: "getForecast",
+    description: "東京都の天気予報を取得します",
+  },
+);
+
+const tools = [addTool, multiplyTool, forecastTool];
+
+const toolsByName = {
+  add: addTool,
+  multiply: multiplyTool,
+  getForecast: forecastTool,
+};
 
 // LangChain の ChatOpenAI クラスは OPENAI_API_KEY 環境変数を自動的に参照する
 const chatModel = new ChatOpenAI();
+const chatModelWithTools = chatModel.bindTools(tools);
 
 const app = express();
 
@@ -13,6 +69,8 @@ app.use(express.static("./public"));
 app.use(express.json());
 
 app.post("/chat", async (request, response) => {
+  // システムプロンプト
+  const systemPromptText = "あなたはアシスタントです。";
   const promptText = request?.body?.promptText;
   // クライアントから送られてきたデータは無条件で信用しない
   if (typeof promptText !== "string") {
@@ -20,8 +78,29 @@ app.post("/chat", async (request, response) => {
     return;
   }
 
-  const aiMessageChunk = await chatModel.invoke(promptText);
-  response.json({ content: aiMessageChunk.content });
+  const messages = [
+    new SystemMessage(systemPromptText),
+    new HumanMessage(promptText),
+  ];
+  const aiMessageChunk = await chatModelWithTools.invoke(promptText);
+  messages.push(aiMessageChunk);
+  // function calling
+  if (aiMessageChunk.response_metadata.finish_reason === "tool_calls") {
+    // 関数を実行
+    for (const toolCall of aiMessageChunk.tool_calls) {
+      const selectedTool = toolsByName[toolCall.name];
+      const toolMessage = await selectedTool.invoke(toolCall);
+      // 実行結果をmessagesにのせる
+      messages.push(toolMessage);
+    }
+    // 関数の実行結果をもとに最終的な返答を得る
+    const aiMessageChunkAfterToolCall = await chatModelWithTools.invoke(
+      messages,
+    );
+    messages.push(aiMessageChunkAfterToolCall);
+  }
+  // console.log(messages);
+  response.json({ content: messages[messages.length - 1].content });
 });
 
 // 使用するホスティングサービス (Render など) によってはリクエストを受け付けるポートが指定されている場合がある。
