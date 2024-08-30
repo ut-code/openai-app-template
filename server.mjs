@@ -4,8 +4,18 @@ import { ChatOpenAI } from "@langchain/openai";
 import { tool } from "@langchain/core/tools";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
-// グローバル変数
-const position = { latitude: 0, longitude: 0 };
+// 状態
+function createState() {
+  let state = { latitude: 0, longitude: 0 };
+  function setState(newState) {
+    state = { ...newState };
+  }
+  function getState() {
+    return state;
+  }
+  return { setState, getState };
+}
+const state = createState();
 
 // toolを定義
 const addTool = tool(
@@ -54,8 +64,9 @@ const forecastTool = tool(
 const restaurantTool = tool(
   async () => {
     const COUNT = 100;
+    const currentState = state.getState();
     const restaurant = await fetch(
-      `http://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${process.env.HOTPEPPER_API_KEY}&lat=${position.latitude}&lng=${position.longitude}&count=${COUNT}&format=json`,
+      `http://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${process.env.HOTPEPPER_API_KEY}&lat=${currentState.latitude}&lng=${currentState.longitude}&count=${COUNT}&format=json`,
     );
     const restaurantJson = await restaurant.json();
     const restaurantText = restaurantJson.results.shop;
@@ -92,8 +103,10 @@ app.use(express.json());
 app.post("/chat", async (request, response) => {
   // システムプロンプト
   const promptText = request?.body?.promptText;
-  position.latitude = request.body.latitude;
-  position.longitude = request.body.longitude;
+  state.setState({
+    latitude: request.body.latitude,
+    longitude: request.body.longitude,
+  });
   const systemPromptText = `あなたは飲食店を提案するアシスタントです。ユーザーにおすすめの飲食店を提案してください。getRestaurant関数を呼び出して飲食店の情報を得てください。`;
   // クライアントから送られてきたデータは無条件で信用しない
   if (typeof promptText !== "string") {
