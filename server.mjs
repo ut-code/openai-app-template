@@ -4,6 +4,9 @@ import { ChatOpenAI } from "@langchain/openai";
 import { tool } from "@langchain/core/tools";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
+// グローバル変数
+const position = { latitude: 0, longitude: 0 };
+
 // toolを定義
 const addTool = tool(
   async ({ a, b }) => {
@@ -48,12 +51,30 @@ const forecastTool = tool(
   },
 );
 
-const tools = [addTool, multiplyTool, forecastTool];
+const restaurantTool = tool(
+  async () => {
+    const COUNT = 100;
+    const restaurant = await fetch(
+      `http://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${process.env.HOTPEPPER_API_KEY}&lat=${position.latitude}&lng=${position.longitude}&count=${COUNT}&format=json`,
+    );
+    const restaurantJson = await restaurant.json();
+    const restaurantText = restaurantJson.results.shop;
+    // console.log(restaurantText);
+    return "おいしいレストランがあります";
+  },
+  {
+    name: "getRestaurant",
+    description: "ユーザーの周辺の飲食店を取得します",
+  },
+);
+
+const tools = [addTool, multiplyTool, forecastTool, restaurantTool];
 
 const toolsByName = {
   add: addTool,
   multiply: multiplyTool,
   getForecast: forecastTool,
+  getRestaurant: restaurantTool,
 };
 
 // LangChain の ChatOpenAI クラスは OPENAI_API_KEY 環境変数を自動的に参照する
@@ -70,8 +91,10 @@ app.use(express.json());
 
 app.post("/chat", async (request, response) => {
   // システムプロンプト
-  const systemPromptText = "あなたはアシスタントです。";
   const promptText = request?.body?.promptText;
+  position.latitude = request.body.latitude;
+  position.longitude = request.body.longitude;
+  const systemPromptText = `あなたは飲食店を提案するアシスタントです。ユーザーにおすすめの飲食店を提案してください。getRestaurant関数を呼び出して飲食店の情報を得てください。`;
   // クライアントから送られてきたデータは無条件で信用しない
   if (typeof promptText !== "string") {
     response.sendStatus(400);
@@ -85,7 +108,10 @@ app.post("/chat", async (request, response) => {
   const aiMessageChunk = await chatModelWithTools.invoke(promptText);
   messages.push(aiMessageChunk);
   // function calling
-  if (aiMessageChunk.response_metadata.finish_reason === "tool_calls") {
+  while (
+    messages[messages.length - 1].response_metadata.finish_reason ===
+    "tool_calls"
+  ) {
     // 関数を実行
     for (const toolCall of aiMessageChunk.tool_calls) {
       const selectedTool = toolsByName[toolCall.name];
