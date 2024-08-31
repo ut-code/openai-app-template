@@ -79,3 +79,22 @@ function addChatMessageElement(author, chatMessage) {
   };
   chatMessagesElement.appendChild(fragment);
 }
+
+const recognition = new webkitSpeechRecognition();
+recognition.lang = 'ja-JP';
+recognition.interimResults = false;
+recognition.maxAlternatives = 1;
+
+recognition.onresult = (event) => {
+    const speechResult = event.results[0][0].transcript;
+    console.log('Result: ', speechResult);
+
+    // 取得した音声結果をテキスト入力に設定
+    promptTextInputElement.value = speechResult;
+
+};
+
+// 音声認識の開始をボタンクリックなどのユーザーイベントに紐づける
+document.getElementById('start-recognition-button').onclick = () => {
+    recognition.start();
+};
