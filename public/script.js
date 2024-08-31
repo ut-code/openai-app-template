@@ -92,6 +92,12 @@ recognition.onresult = (event) => {
     // 取得した音声結果をテキスト入力に設定
     promptTextInputElement.value = speechResult;
 
+    //フォームを自動送信
+    const submitButton = document.querySelector('#input-form button[type="submit"]');
+            if (submitButton) {
+                submitButton.click();
+            }
+
 };
 
 // 音声認識の開始をボタンクリックなどのユーザーイベントに紐づける
