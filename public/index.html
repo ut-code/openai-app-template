@@ -23,8 +23,28 @@
     </ul>
     <form id="input-form">
       <input id="prompt-text-input" />
+      <button id='start-recognition-button'>音声入力</button>
       <button type="submit">送信</button>
     </form>
+    <div id="location-information">現在位置が不明です。</div>
+    <ul id="restaurant-cards">
+      <template id="restaurant-card-template">
+        <div class="restaurant-name"></div>
+        <div class="restaurant-genre"></div>
+        <img class="restaurant-photo"/>
+      </template>
+    </ul>
+      <dialog id="restaurantDialog">
+        <span class="close" id="closeDialog">&times;</span>
+        <img id="restaurantImage" src="" alt="Restaurant Image">
+        <h2 id="restaurantName">飲食店名</h2>
+        <p id="restaurantGenre">ジャンル: </p>
+        <p id="restaurantBudget">予算: </p>
+        <p id="restaurantTime">所要時間: </p>
+        <button id="yes-button">ここへ行く！</button>
+        <button id="no-button">他の店へ</button>
+      </dialog>
+      
     <script src="/script.js"></script>
   </body>
 </html>
