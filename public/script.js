@@ -97,8 +97,11 @@ function addChatMessageElement(author, chatMessage, recommendedRestaurantList) {
         restaurantCardFragment.querySelector(".restaurant-name");
       const restaurantCardGenreElement =
         restaurantCardFragment.querySelector(".restaurant-genre");
+      const restaurantCardPhotoElement =
+        restaurantCardFragment.querySelector(".restaurant-photo");
       restaurantCardNameElement.textContent = restaurant.name;
       restaurantCardGenreElement.textContent = restaurant.genre_name;
+      restaurantCardPhotoElement.src = restaurant.photo;
       restaurantCardsElement.appendChild(restaurantCardFragment);
     }
   }

@@ -7,7 +7,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 // 定数
 const COUNT = 100;
 const COLUMNS = ['name','catch']
-const OTHER_COLUMNS = ['genre_name']
+const OTHER_COLUMNS = ['genre_name', 'photo']
 let RESPONSE_FORMAT = '{'+COLUMNS.map((columnName)=>`${columnName}: restaurant ${columnName}`).join(', ')
 RESPONSE_FORMAT += OTHER_COLUMNS.map((columnName)=>`${columnName}: restaurant ${columnName}`).join(', ')
 RESPONSE_FORMAT += '}'
@@ -89,6 +89,7 @@ const restaurantTool = tool(
       }
       // その他を手動で追加
       resultText += `genre_name: ${arr.genre.name}`
+      resultText += `photo: ${arr.photo.pc.m}`
       return resultText
     })
     // console.log(restaurantText);
