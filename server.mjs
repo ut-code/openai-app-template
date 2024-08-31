@@ -91,7 +91,7 @@ const restaurantTool = tool(
       resultText += `genre_name: ${arr.genre.name}`
       return resultText
     })
-    console.log(restaurantText);
+    // console.log(restaurantText);
     return restaurantText;
   },
   {
@@ -153,7 +153,6 @@ app.post("/chat", async (request, response) => {
       const toolMessage = await selectedTool.invoke(toolCall);
       // 実行結果をmessagesにのせる
       messages.push(toolMessage);
-      console.log(messages);
     }
     // 関数の実行結果をもとに最終的な返答を得る
     const aiMessageChunkAfterToolCall = await chatModelWithTools.invoke(
@@ -163,6 +162,7 @@ app.post("/chat", async (request, response) => {
   }
   // debug
   // console.log(state.getState());
+  console.log(messages);
   response.json({ content: messages[messages.length - 1].content });
 });
 
