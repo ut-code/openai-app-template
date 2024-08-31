@@ -7,7 +7,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 // 定数
 const COUNT = 100;
 const COLUMNS = ['name','catch']
-const OTHER_COLUMNS = ['genre_name']
+const OTHER_COLUMNS = ['genre_name', 'photo']
 let RESPONSE_FORMAT = '{'+COLUMNS.map((columnName)=>`${columnName}: restaurant ${columnName}`).join(', ')
 RESPONSE_FORMAT += OTHER_COLUMNS.map((columnName)=>`${columnName}: restaurant ${columnName}`).join(', ')
 RESPONSE_FORMAT += '}'
@@ -89,9 +89,10 @@ const restaurantTool = tool(
       }
       // その他を手動で追加
       resultText += `genre_name: ${arr.genre.name}`
+      resultText += `photo: ${arr.photo.pc.m}`
       return resultText
     })
-    console.log(restaurantText);
+    // console.log(restaurantText);
     return restaurantText;
   },
   {
@@ -153,7 +154,6 @@ app.post("/chat", async (request, response) => {
       const toolMessage = await selectedTool.invoke(toolCall);
       // 実行結果をmessagesにのせる
       messages.push(toolMessage);
-      console.log(messages);
     }
     // 関数の実行結果をもとに最終的な返答を得る
     const aiMessageChunkAfterToolCall = await chatModelWithTools.invoke(
@@ -163,6 +163,7 @@ app.post("/chat", async (request, response) => {
   }
   // debug
   // console.log(state.getState());
+  console.log(messages);
   response.json({ content: messages[messages.length - 1].content });
 });
 

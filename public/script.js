@@ -2,6 +2,10 @@ const chatMessagesElement = document.getElementById("chat-messages");
 const chatMessageTemplateElement = document.getElementById(
   "chat-message-template",
 );
+const restaurantCardsElement = document.getElementById("restaurant-cards");
+const restaurantCardTemplateElement = document.getElementById(
+  "restaurant-card-template",
+);
 const inputFormElement = document.getElementById("input-form");
 const promptTextInputElement = document.getElementById("prompt-text-input");
 
@@ -31,13 +35,20 @@ inputFormElement.onsubmit = async (event) => {
 
       const yourChatMessage = { content: promptText };
       addChatMessageElement("you", yourChatMessage);
-
-      const aiChatMessage = await postChat({
-        promptText,
-        latitude: latitude,
-        longitude: longitude,
-      });
-      addChatMessageElement("ai", aiChatMessage);
+      while (true) {
+        try {
+          const aiChatMessage = await postChat({
+            promptText,
+            latitude: latitude,
+            longitude: longitude,
+          });
+          const recommendedRestaurantList = JSON.parse(aiChatMessage.content);
+          addChatMessageElement("ai", aiChatMessage, recommendedRestaurantList);
+          break;
+        } catch (error) {
+          continue;
+        }
+      }
     })
     .catch((error) => {
       window.alert("位置情報の取得に失敗しました。エラーコード：" + error.code);
@@ -57,7 +68,7 @@ async function postChat(request) {
 }
 
 // メッセージを画面に描画する
-function addChatMessageElement(author, chatMessage) {
+function addChatMessageElement(author, chatMessage, recommendedRestaurantList) {
   // template 要素 (HTMLTemplateElement) は content プロパティを持ち、cloneNode メソッドで複製して利用できる
   // 引数に true を渡すと子孫要素も複製される
   const fragment = chatMessageTemplateElement.content.cloneNode(true);
@@ -78,6 +89,22 @@ function addChatMessageElement(author, chatMessage) {
     rootElement.remove();
   };
   chatMessagesElement.appendChild(fragment);
+  if (author === "ai") {
+    for (const restaurant of recommendedRestaurantList) {
+      const restaurantCardFragment =
+        restaurantCardTemplateElement.content.cloneNode(true);
+      const restaurantCardNameElement =
+        restaurantCardFragment.querySelector(".restaurant-name");
+      const restaurantCardGenreElement =
+        restaurantCardFragment.querySelector(".restaurant-genre");
+      const restaurantCardPhotoElement =
+        restaurantCardFragment.querySelector(".restaurant-photo");
+      restaurantCardNameElement.textContent = restaurant.name;
+      restaurantCardGenreElement.textContent = restaurant.genre_name;
+      restaurantCardPhotoElement.src = restaurant.photo;
+      restaurantCardsElement.appendChild(restaurantCardFragment);
+    }
+  }
 }
 
 const recognition = new webkitSpeechRecognition();
