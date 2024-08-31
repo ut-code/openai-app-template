@@ -139,7 +139,7 @@ app.post("/chat", async (request, response) => {
     new SystemMessage(systemPromptText),
     new HumanMessage(promptText),
   ];
-  const aiMessageChunk = await chatModelWithTools.invoke(promptText);
+  const aiMessageChunk = await chatModelWithTools.invoke(messages);
   messages.push(aiMessageChunk);
   // function calling
   while (
