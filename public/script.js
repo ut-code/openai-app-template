@@ -1,23 +1,47 @@
 const chatMessagesElement = document.getElementById("chat-messages");
 const chatMessageTemplateElement = document.getElementById(
-  "chat-message-template"
+  "chat-message-template",
 );
 const inputFormElement = document.getElementById("input-form");
 const promptTextInputElement = document.getElementById("prompt-text-input");
 
+const locationInformationElement = document.getElementById(
+  "location-information",
+);
+
 inputFormElement.onsubmit = async (event) => {
   // フォームが送信されたときのページ遷移を防ぐ
   event.preventDefault();
+  // 現在位置を取得
+  function getCoordinates() {
+    return new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject),
+    );
+  }
+  getCoordinates()
+    .then(async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const locationText = `緯度: ${latitude}, 経度: ${longitude}`;
+      locationInformationElement.textContent = locationText;
 
-  const promptText = promptTextInputElement.value.trim();
-  if (promptText === "") return;
-  promptTextInputElement.value = "";
+      const promptText = promptTextInputElement.value.trim();
+      if (promptText === "") return;
+      promptTextInputElement.value = "";
 
-  const yourChatMessage = { content: promptText };
-  addChatMessageElement("you", yourChatMessage);
+      const yourChatMessage = { content: promptText };
+      addChatMessageElement("you", yourChatMessage);
 
-  const aiChatMessage = await postChat({ promptText });
-  addChatMessageElement("ai", aiChatMessage);
+      const aiChatMessage = await postChat({
+        promptText,
+        latitude: latitude,
+        longitude: longitude,
+      });
+      addChatMessageElement("ai", aiChatMessage);
+    })
+    .catch((error) => {
+      window.alert("位置情報の取得に失敗しました。エラーコード：" + error.code);
+    });
 };
 
 // /chat に POST リクエストを送信する
@@ -42,7 +66,7 @@ function addChatMessageElement(author, chatMessage) {
   const authorElement = fragment.querySelector(".chat-message__author");
   const contentElement = fragment.querySelector(".chat-message__content");
   const deleteButtonElement = fragment.querySelector(
-    ".chat-message__delete-button"
+    ".chat-message__delete-button",
   );
 
   // classList プロパティを使うと HTML の class 属性を簡単に操作できる
