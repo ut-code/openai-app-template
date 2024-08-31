@@ -88,24 +88,70 @@ function addChatMessageElement(author, chatMessage, recommendedRestaurantList) {
   deleteButtonElement.onclick = () => {
     rootElement.remove();
   };
+  if (author === "you")
   chatMessagesElement.appendChild(fragment);
   if (author === "ai") {
-    for (const restaurant of recommendedRestaurantList) {
-      const restaurantCardFragment =
-        restaurantCardTemplateElement.content.cloneNode(true);
-      const restaurantCardNameElement =
-        restaurantCardFragment.querySelector(".restaurant-name");
-      const restaurantCardGenreElement =
-        restaurantCardFragment.querySelector(".restaurant-genre");
-      const restaurantCardPhotoElement =
-        restaurantCardFragment.querySelector(".restaurant-photo");
-      restaurantCardNameElement.textContent = restaurant.name;
-      restaurantCardGenreElement.textContent = restaurant.genre_name;
-      restaurantCardPhotoElement.src = restaurant.photo;
-      restaurantCardsElement.appendChild(restaurantCardFragment);
+    document.getElementById("input-form").innerHTML = ""
+    // for (const restaurant of recommendedRestaurantList) {
+    //   const restaurantCardFragment =
+    //     restaurantCardTemplateElement.content.cloneNode(true);
+    //   const restaurantCardNameElement =
+    //     restaurantCardFragment.querySelector(".restaurant-name");
+    //   const restaurantCardGenreElement =
+    //     restaurantCardFragment.querySelector(".restaurant-genre");
+    //   const restaurantCardPhotoElement =
+    //     restaurantCardFragment.querySelector(".restaurant-photo");
+    //   restaurantCardNameElement.textContent = restaurant.name;
+    //   restaurantCardGenreElement.textContent = restaurant.genre_name;
+    //   restaurantCardPhotoElement.src = restaurant.photo;
+    //   restaurantCardsElement.appendChild(restaurantCardFragment);
+    // }
+      
+  let currentIndex = 0;
+  showDialog(currentIndex);
+  function showDialog(currentIndex) {
+    const restaurantData = recommendedRestaurantList[currentIndex];
+    // ダイアログの要素
+    const dialog = document.getElementById("restaurantDialog");
+    const closeButton = document.getElementById("closeDialog");
+
+    document.getElementById("restaurantImage").src = restaurantData.photo;
+    document.getElementById("restaurantName").textContent = restaurantData.name;
+    document.getElementById("restaurantGenre").textContent = "ジャンル: " + restaurantData.genre_name;
+    document.getElementById("restaurantBudget").textContent = "予算: " + restaurantData.budget;
+    document.getElementById("restaurantTime").textContent = "所要時間: " + restaurantData.time;
+    dialog.showModal();
+
+    document.getElementById("yes-button").onclick = () => {
+    alert('選択されました: ' + restaurantData.name);
+    }
+
+    document.getElementById("no-button").onclick = () => {
+      currentIndex++;
+      if (currentIndex <= recommendedRestaurantList.length - 1) {
+        dialog.close();
+        showDialog(currentIndex);
+      } else {
+        location.reload();
+      }
+    }
+
+
+    // ダイアログを閉じる
+    closeButton.onclick = function() {
+        dialog.close();
+    };
+
+    // ダイアログの外側をクリックすると閉じる
+    window.onclick = function(event) {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    };
+  }
+
     }
   }
-}
 
 const recognition = new webkitSpeechRecognition();
 recognition.lang = 'ja-JP';
